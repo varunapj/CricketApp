@@ -21,9 +21,45 @@ def normalize_role(raw):
 
 
 def parse_players(path):
+    """Parse players from a TSV/CSV or Excel file.
+
+    Accepts paths to files with extensions: .tsv, .csv, .xlsx, .xls
+    Returns list of player dicts with keys: name, dob, role, league, impact
+    """
+    from pathlib import Path
     players = []
-    with open(path, newline='') as f:
-        reader = csv.DictReader(f, delimiter='\t')
+    p = Path(path)
+    suffix = p.suffix.lower()
+
+    # Excel handling via pandas if available
+    if suffix in ('.xlsx', '.xls'):
+        try:
+            import pandas as _pd
+        except Exception:
+            raise RuntimeError('Reading Excel requires pandas. Please install with `pip install pandas openpyxl`')
+        df = _pd.read_excel(path)
+        # normalize dataframe columns (strip)
+        df.columns = [str(c).strip() for c in df.columns]
+        for _, row in df.iterrows():
+            player = {str(k).strip(): (str(v).strip() if not (_pd.isna(v)) else '') for k, v in row.items()}
+            name = player.get('Player Name') or player.get('Player') or ''
+            dob = player.get('Date of Birth', '')
+            role = normalize_role(player.get('Role', ''))
+            league = player.get('League Player', '')
+            impact = player.get('Impact Player', '')
+            players.append({
+                'name': name,
+                'dob': dob,
+                'role': role,
+                'league': league,
+                'impact': impact,
+            })
+        return players
+
+    # fallback: treat as text TSV/CSV
+    delim = '\t' if suffix == '.tsv' or suffix == '' else ','
+    with open(path, newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f, delimiter=delim)
         for row in reader:
             # normalize keys by stripping
             player = {k.strip(): (v.strip() if v is not None else '') for k, v in row.items()}
@@ -52,8 +88,48 @@ def normalize_name(n):
 
 
 def parse_availability(path):
+    """Parse availability names from a text file (one-per-line) or from Excel/CSV.
+
+    If Excel is provided, attempts to read a column named 'Player Name' or uses the
+    first column.
+    """
+    from pathlib import Path
     names = []
-    with open(path, 'r') as f:
+    p = Path(path)
+    suffix = p.suffix.lower()
+
+    if suffix in ('.xlsx', '.xls'):
+        try:
+            import pandas as _pd
+        except Exception:
+            raise RuntimeError('Reading Excel requires pandas. Please install with `pip install pandas openpyxl`')
+        df = _pd.read_excel(path)
+        if 'Player Name' in df.columns:
+            col = df['Player Name']
+        else:
+            # take first column
+            col = df.iloc[:, 0]
+        for v in col:
+            if _pd.isna(v):
+                continue
+            n = str(v).strip()
+            if n:
+                names.append(n)
+        return names
+
+    delim = '\t' if suffix == '.tsv' or suffix == '' else ','
+    if delim == ',' and suffix in ('.csv',):
+        # CSV file read
+        with open(path, newline='', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if not row:
+                    continue
+                names.append(row[0].strip())
+        return names
+
+    # default: plain text one-name-per-line
+    with open(path, 'r', encoding='utf-8') as f:
         for line in f:
             n = line.strip()
             if not n:

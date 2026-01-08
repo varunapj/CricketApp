@@ -15,16 +15,19 @@ GENERATED_DIR.mkdir(exist_ok=True)
 def save_upload(file_storage, prefix='upload'):
     if not file_storage:
         return None
-    fd, path = tempfile.mkstemp(prefix=prefix, dir=str(GENERATED_DIR))
-    with os.fdopen(fd, 'wb') as f:
-        f.write(file_storage.read())
-    return path
+    # preserve extension so downstream parsers can detect format
+    suffix = Path(file_storage.filename).suffix if file_storage.filename else ''
+    tmp = tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=str(GENERATED_DIR), delete=False)
+    tmp.write(file_storage.read())
+    tmp.flush()
+    tmp.close()
+    return tmp.name
 
 
 @app.route('/', methods=['GET'])
 def index():
     # list repo TSVs in root to choose
-    tsvs = [p.name for p in ROOT.iterdir() if p.is_file() and p.suffix in ('.tsv', '') and 'Players_Inventory' in p.name]
+    tsvs = [p.name for p in ROOT.iterdir() if p.is_file() and p.suffix.lower() in ('.tsv', '.csv', '.xlsx', '.xls') and 'Players_Inventory' in p.name]
     return render_template('index.html', tsvs=tsvs)
 
 
