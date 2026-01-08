@@ -54,14 +54,6 @@ def split():
             availability_path = save_upload(up, prefix='avail_')
 
     # weights and options
-    try:
-        impact_w = int(request.form.get('impact_weight', 100))
-    except ValueError:
-        impact_w = 100
-    try:
-        league_w = int(request.form.get('league_weight', 10))
-    except ValueError:
-        league_w = 10
     role_parity = bool(request.form.get('role_parity'))
 
     # parse master players
@@ -78,7 +70,7 @@ def split():
         ambiguous = []
         players_to_split = players
 
-    teamA, teamB, totals = split_teams(players_to_split, impact_w=impact_w, league_w=league_w, ensure_role_parity=role_parity)
+    teamA, teamB, totals = split_teams(players_to_split, ensure_role_parity=role_parity)
 
     # write generated files
     a_path = GENERATED_DIR / 'ui_team_A.tsv'
@@ -105,4 +97,6 @@ def download(fname):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
+    port = int(os.environ.get('FLASK_PORT', '5000'))
+    app.run(host=host, port=port, debug=True)

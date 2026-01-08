@@ -33,31 +33,17 @@
                 <label class="form-check-label" for="avail_none">No availability (use all master)</label>
               </div>
               <div class="form-check mt-1">
-                <input class="form-check-input" type="radio" name="availability_source" id="avail_repo" value="repo">
-                <label class="form-check-label" for="avail_repo">Use Players_Availability from repo</label>
-              </div>
-              <div class="form-check mt-1">
                 <input class="form-check-input" type="radio" name="availability_source" id="avail_upload" value="upload">
                 <label class="form-check-label" for="avail_upload">Upload availability file</label>
               </div>
               <input class="form-control mt-2" type="file" name="availability_file" id="availability_file" accept=".tsv,.txt,.csv" disabled>
             </div>
 
-            <div class="row g-3 align-items-center mb-3">
-              <div class="col-auto">
-                <label class="form-label">Impact weight</label>
-                <input class="form-control" type="number" name="impact_weight" id="impact_weight" value="100" min="0">
-              </div>
-              <div class="col-auto">
-                <label class="form-label">League weight</label>
-                <input class="form-control" type="number" name="league_weight" id="league_weight" value="10" min="0">
-              </div>
-              <div class="col-auto">
-                <label class="form-label d-block">Options</label>
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="role_parity" id="role_parity">
-                  <label class="form-check-label" for="role_parity">Enforce role parity</label>
-                </div>
+            <div class="mb-3">
+              <label class="form-label d-block">Options</label>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="role_parity" id="role_parity">
+                <label class="form-check-label" for="role_parity">Enforce role parity</label>
               </div>
             </div>
 

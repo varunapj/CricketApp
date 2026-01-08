@@ -26,3 +26,24 @@ Output:
 - Two output files (one per team) containing only player names, one per line when `--write-output` is used.
 
 Adjust weights to tune how strongly Impact and League affect balancing.
+
+Web UI
+------
+You can run a small Flask web UI to upload/select sheets, set weights and split teams.
+
+Install dependencies:
+
+```bash
+python3 -m pip install --user -r requirements.txt
+```
+
+Run the app from the project root:
+
+```bash
+python3 app.py
+```
+
+Open `http://127.0.0.1:5000/` in your browser.
+
+Note: The UI no longer exposes impact/league weight controls — the splitter uses sensible defaults. Use the CLI flags in `split_teams.py` if you need to tune weights manually.
+

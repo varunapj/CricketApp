@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const masterFile = document.getElementById('master_file');
 
   const availNone = document.getElementById('avail_none');
-  const availRepo = document.getElementById('avail_repo');
   const availUpload = document.getElementById('avail_upload');
   const availFile = document.getElementById('availability_file');
 
@@ -16,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   [masterRepo, masterUpload].forEach(el => el && el.addEventListener('change', updateMaster));
-  [availNone, availRepo, availUpload].forEach(el => el && el.addEventListener('change', updateAvail));
+  [availNone, availUpload].forEach(el => el && el.addEventListener('change', updateAvail));
 
   updateMaster();
   updateAvail();
@@ -25,17 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const form = document.getElementById('splitForm');
   if (form) {
     form.addEventListener('submit', function (e) {
-      const impact = document.getElementById('impact_weight');
-      const league = document.getElementById('league_weight');
-      let ok = true;
-      if (!impact || isNaN(impact.value) || Number(impact.value) < 0) ok = false;
-      if (!league || isNaN(league.value) || Number(league.value) < 0) ok = false;
-      if (!ok) {
-        e.preventDefault();
-        alert('Please provide valid non-negative numeric weights for Impact and League.');
-        return false;
-      }
-
       // ensure master chosen (repo is default)
       if (masterUpload && masterUpload.checked && masterFile && masterFile.files.length === 0) {
         e.preventDefault();
