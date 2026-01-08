@@ -1,0 +1,108 @@
+from flask import Flask, request, render_template, send_file, redirect, url_for, flash
+import os
+import tempfile
+from pathlib import Path
+from split_teams import parse_players, parse_availability, crosscheck_availability, split_teams
+
+app = Flask(__name__)
+app.secret_key = 'dev-secret'
+
+ROOT = Path(__file__).resolve().parent
+GENERATED_DIR = ROOT / 'generated'
+GENERATED_DIR.mkdir(exist_ok=True)
+
+
+def save_upload(file_storage, prefix='upload'):
+    if not file_storage:
+        return None
+    fd, path = tempfile.mkstemp(prefix=prefix, dir=str(GENERATED_DIR))
+    with os.fdopen(fd, 'wb') as f:
+        f.write(file_storage.read())
+    return path
+
+
+@app.route('/', methods=['GET'])
+def index():
+    # list repo TSVs in root to choose
+    tsvs = [p.name for p in ROOT.iterdir() if p.is_file() and p.suffix in ('.tsv', '') and 'Players_Inventory' in p.name]
+    return render_template('index.html', tsvs=tsvs)
+
+
+@app.route('/split', methods=['POST'])
+def split():
+    # decide master source
+    use_repo_master = request.form.get('master_source') == 'repo'
+    uploaded_master = request.files.get('master_file')
+    master_path = None
+    if use_repo_master:
+        master_choice = request.form.get('repo_master') or 'Players_Inventory.tsv'
+        master_path = str(ROOT / master_choice)
+    elif uploaded_master and uploaded_master.filename:
+        master_path = save_upload(uploaded_master, prefix='master_')
+    else:
+        flash('No master TSV chosen or uploaded', 'error')
+        return redirect(url_for('index'))
+
+    # availability (optional)
+    avail_choice = request.form.get('availability_source')
+    availability_path = None
+    if avail_choice == 'repo':
+        availability_path = str(ROOT / 'Players_Availability') if (ROOT / 'Players_Availability').exists() else None
+    elif avail_choice == 'upload':
+        up = request.files.get('availability_file')
+        if up and up.filename:
+            availability_path = save_upload(up, prefix='avail_')
+
+    # weights and options
+    try:
+        impact_w = int(request.form.get('impact_weight', 100))
+    except ValueError:
+        impact_w = 100
+    try:
+        league_w = int(request.form.get('league_weight', 10))
+    except ValueError:
+        league_w = 10
+    role_parity = bool(request.form.get('role_parity'))
+
+    # parse master players
+    players = parse_players(master_path)
+
+    # if availability provided, parse and crosscheck
+    if availability_path:
+        avail_names = parse_availability(availability_path)
+        matched, unmatched, ambiguous = crosscheck_availability(players, avail_names)
+        players_to_split = matched
+    else:
+        matched = []
+        unmatched = []
+        ambiguous = []
+        players_to_split = players
+
+    teamA, teamB, totals = split_teams(players_to_split, impact_w=impact_w, league_w=league_w, ensure_role_parity=role_parity)
+
+    # write generated files
+    a_path = GENERATED_DIR / 'ui_team_A.tsv'
+    b_path = GENERATED_DIR / 'ui_team_B.tsv'
+    with open(a_path, 'w', encoding='utf-8') as fa:
+        for p in teamA:
+            fa.write(p['name'] + '\n')
+    with open(b_path, 'w', encoding='utf-8') as fb:
+        for p in teamB:
+            fb.write(p['name'] + '\n')
+
+    return render_template('result.html', teamA=teamA, teamB=teamB, totals=totals,
+                           unmatched=unmatched, ambiguous=ambiguous,
+                           a_file=a_path.name, b_file=b_path.name)
+
+
+@app.route('/download/<fname>')
+def download(fname):
+    path = GENERATED_DIR / fname
+    if not path.exists():
+        flash('File not found', 'error')
+        return redirect(url_for('index'))
+    return send_file(str(path), as_attachment=True)
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

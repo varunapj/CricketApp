@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Team Splitter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+  </head>
+  <body class="bg-light">
+    <div class="container py-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h1 class="h3 mb-3">Team Splitter</h1>
+          <form id="splitForm" action="/split" method="post" enctype="multipart/form-data" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Master players (Players_Inventory)</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="master_source" id="master_repo" value="repo" checked>
+                <label class="form-check-label" for="master_repo">Use repository master</label>
+              </div>
+              <div class="form-check mt-1">
+                <input class="form-check-input" type="radio" name="master_source" id="master_upload" value="upload">
+                <label class="form-check-label" for="master_upload">Upload master TSV</label>
+              </div>
+              <input class="form-control mt-2" type="file" name="master_file" id="master_file" accept=".tsv,.txt,.csv" disabled>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Availability (optional)</label>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="availability_source" id="avail_none" value="none" checked>
+                <label class="form-check-label" for="avail_none">No availability (use all master)</label>
+              </div>
+              <div class="form-check mt-1">
+                <input class="form-check-input" type="radio" name="availability_source" id="avail_repo" value="repo">
+                <label class="form-check-label" for="avail_repo">Use Players_Availability from repo</label>
+              </div>
+              <div class="form-check mt-1">
+                <input class="form-check-input" type="radio" name="availability_source" id="avail_upload" value="upload">
+                <label class="form-check-label" for="avail_upload">Upload availability file</label>
+              </div>
+              <input class="form-control mt-2" type="file" name="availability_file" id="availability_file" accept=".tsv,.txt,.csv" disabled>
+            </div>
+
+            <div class="row g-3 align-items-center mb-3">
+              <div class="col-auto">
+                <label class="form-label">Impact weight</label>
+                <input class="form-control" type="number" name="impact_weight" id="impact_weight" value="100" min="0">
+              </div>
+              <div class="col-auto">
+                <label class="form-label">League weight</label>
+                <input class="form-control" type="number" name="league_weight" id="league_weight" value="10" min="0">
+              </div>
+              <div class="col-auto">
+                <label class="form-label d-block">Options</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="role_parity" id="role_parity">
+                  <label class="form-check-label" for="role_parity">Enforce role parity</label>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Split teams</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <h6>Existing master files in repo</h6>
+        <ul>
+          {% for t in tsvs %}
+          <li>{{ t }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
