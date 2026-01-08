@@ -8,10 +8,23 @@
     <link href="/static/style.css" rel="stylesheet">
   </head>
   <body class="bg-light">
-    <div class="container py-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h1 class="h3 mb-3">Team Splitter</h1>
+    <div class="container py-4 root-bg">
+      <nav class="navbar mb-4 navbar-expand bg-transparent">
+        <div class="container-fluid align-items-center">
+          <a class="navbar-brand d-flex align-items-center gap-3" href="#">
+            <img src="/static/images/Surprise_Cricket_club.png" alt="Surprise Cricket Club" onerror="this.style.display='none'" height="48" class="rounded-circle border shadow-sm">
+            <div>
+              <div class="h5 mb-0">Surprise Cricket Club</div>
+              <small class="text-muted">Team Splitter</small>
+            </div>
+          </a>
+        </div>
+      </nav>
+
+      <div class="card bg-white border-0 shadow-lg rounded-4">
+        <div class="card-body p-4">
+          <h1 class="h3 mb-3">Create balanced teams</h1>
+          <p class="text-muted">Upload a master TSV or use the repository master, optionally provide an availability list, and split players into two balanced teams.</p>
           <form id="splitForm" action="/split" method="post" enctype="multipart/form-data" novalidate>
             <div class="mb-3">
               <label class="form-label">Master players (Players_Inventory)</label>

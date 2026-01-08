@@ -1,3 +1,12 @@
+.root-bg{min-height:100vh;background:linear-gradient(180deg,#f4f7fb 0%,#eef4fb 50%)}
 body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
-.team-list { background:#f8f9fa; padding:12px; border-radius:4px; }
-.card { border-radius:6px; }
+.team-list { background:#f8f9fa; padding:12px; border-radius:6px; white-space:pre-wrap }
+.card { border-radius:12px; }
+.shadow-lg{box-shadow:0 6px 18px rgba(23,31,58,0.08)!important}
+.btn-primary{background:linear-gradient(90deg,#0066ff,#00a0ff);border:0}
+.navbar-brand img{object-fit:cover}
+.info-small{font-size:0.95rem;color:#6b7280}
+
+/* make file inputs look nicer */
+input[type=file]{padding:.4rem}
+

@@ -47,3 +47,7 @@ Open `http://127.0.0.1:5000/` in your browser.
 
 Note: The UI no longer exposes impact/league weight controls — the splitter uses sensible defaults. Use the CLI flags in `split_teams.py` if you need to tune weights manually.
 
+Branding / logo
+----------------
+Place your club logo at `static/images/Surprise_Cricket_club.png` and the UI header will display it automatically. A `.gitkeep` exists in that folder so you can add the PNG without missing directories.
+
