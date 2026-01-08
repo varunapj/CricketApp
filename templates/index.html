@@ -13,7 +13,7 @@
         <div style="display:flex;align-items:center;gap:12px">
           <img src="/static/images/Surprise_Cricket_club.png" alt="logo" onerror="this.style.display='none'" class="site-logo">
           <div>
-            <h1>Create Balanced Teams</h1>
+            <h1>Surprise Cricket Club -Team Splitter</h1>
             <p>Split players into two fair teams based on skill and availability.</p>
           </div>
         </div>
@@ -25,12 +25,12 @@
                       <label class="radio-label">
                           <input type="radio" name="master_source" value="repo" checked> Use repository master
                       </label>
-                      <label class="radio-label">
-                          <input type="radio" name="master_source" id="upload-master" value="upload"> Upload master TSV
+                        <label class="radio-label">
+                          <input type="radio" name="master_source" id="upload-master" value="upload"> Upload master file (TSV / CSV / Excel)
                           <div class="file-upload-wrapper">
-                              <input type="file" name="master_file" accept=".tsv,.txt,.csv">
+                            <input type="file" name="master_file" accept=".tsv,.txt,.csv,.xlsx,.xls">
                           </div>
-                      </label>
+                        </label>
                   </div>
               </div>
 
@@ -40,12 +40,12 @@
                     <label class="radio-label">
                         <input type="radio" name="availability_source" value="none" checked> Use all players
                     </label>
-                    <label class="radio-label">
-                        <input type="radio" name="availability_source" id="upload-avail" value="upload"> Upload availability list
-                        <div class="file-upload-wrapper">
-                            <input type="file" name="availability_file" accept=".tsv,.txt,.csv">
-                        </div>
-                    </label>
+                  <label class="radio-label">
+                    <input type="radio" name="availability_source" id="upload-avail" value="upload"> Upload availability file (one name per line or Excel/CSV)
+                    <div class="file-upload-wrapper">
+                      <input type="file" name="availability_file" accept=".tsv,.txt,.csv,.xlsx,.xls">
+                    </div>
+                  </label>
                 </div>
             </div>
 
