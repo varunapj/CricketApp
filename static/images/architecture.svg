@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <style>
+    .box { fill:#ffffff; stroke:#333; stroke-width:2; rx:8; }
+    .title { font: 700 18px/1.2 'Segoe UI', Roboto, Arial; fill:#111 }
+    .text { font: 14px/1.2 'Segoe UI', Roboto, Arial; fill:#222 }
+    .arrow { stroke:#666; stroke-width:2; fill:none; marker-end:url(#arrowhead);} 
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+    </marker>
+  </defs>
+
+  <!-- Client -->
+  <g transform="translate(40,40)">
+    <rect class="box" width="260" height="90"/>
+    <text class="title" x="18" y="28">Client Browser (UI)</text>
+    <text class="text" x="18" y="52">GET /, POST /split (uploads)</text>
+    <text class="text" x="18" y="70">Shows results + download links</text>
+  </g>
+
+  <!-- Flask App -->
+  <g transform="translate(420,40)">
+    <rect class="box" width="360" height="140"/>
+    <text class="title" x="18" y="28">Flask App — app.py</text>
+    <text class="text" x="18" y="52">Endpoints: /, /split, /download</text>
+    <text class="text" x="18" y="70">Handles file uploads, validation</text>
+    <text class="text" x="18" y="88">Invokes splitter functions</text>
+  </g>
+
+  <!-- Splitter -->
+  <g transform="translate(420,220)">
+    <rect class="box" width="360" height="160"/>
+    <text class="title" x="18" y="28">Splitter Module — split_teams.py</text>
+    <text class="text" x="18" y="52">parse_players(), parse_availability()</text>
+    <text class="text" x="18" y="72">score_player() — Impact/League/Role</text>
+    <text class="text" x="18" y="92">split_teams(..., role_parity)</text>
+    <text class="text" x="18" y="112">write_team() → generated/*.tsv</text>
+  </g>
+
+  <!-- Storage / Artifacts -->
+  <g transform="translate(860,40)">
+    <rect class="box" width="300" height="170"/>
+    <text class="title" x="18" y="28">Storage / Artifacts</text>
+    <text class="text" x="18" y="52">Input: Players_Inventory.tsv</text>
+    <text class="text" x="18" y="72">Optional: availability upload</text>
+    <text class="text" x="18" y="92">Outputs: generated/ui_team_A.tsv</text>
+    <text class="text" x="18" y="112">generated/ui_team_B.tsv (names-only)</text>
+    <text class="text" x="18" y="132">static/images/Surprise_Cricket_club.png (logo)</text>
+  </g>
+
+  <!-- Optional Integrations -->
+  <g transform="translate(860,240)">
+    <rect class="box" width="300" height="110"/>
+    <text class="title" x="18" y="28">Optional Integrations</text>
+    <text class="text" x="18" y="52">Google Sheets fetcher (future)</text>
+    <text class="text" x="18" y="72">CI / Git (repo commits)</text>
+  </g>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M300 85 L420 85"/>
+  <path class="arrow" d="M600 180 L600 220"/>
+  <path class="arrow" d="M780 260 L860 260"/>
+  <path class="arrow" d="M780 300 L860 300"/>
+  <path class="arrow" d="M300 120 L420 200"/>
+
+  <!-- Footer note -->
+  <text class="text" x="40" y="700">Generated: architecture.svg — visual overview of the app components and dataflow.</text>
+</svg>
