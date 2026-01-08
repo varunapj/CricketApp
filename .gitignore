@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+# generated team files
+players_teams_*.tsv
+avail_teams_*.tsv
