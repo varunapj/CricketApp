@@ -104,4 +104,8 @@ def download(fname):
 if __name__ == '__main__':
     host = os.environ.get('FLASK_HOST', '127.0.0.1')
     port = int(os.environ.get('FLASK_PORT', '5000'))
-    app.run(host=host, port=port, debug=True)
+    # Allow controlling debug and reloader via environment variables.
+    debug = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes')
+    # Disable the reloader by default on hosted platforms to avoid signal errors.
+    use_reloader = os.environ.get('FLASK_USE_RELOADER', '0').lower() in ('1', 'true', 'yes')
+    app.run(host=host, port=port, debug=debug, use_reloader=use_reloader)
