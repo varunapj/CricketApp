@@ -3,34 +3,33 @@ from pathlib import Path
 from PIL import Image
 import pandas as pd
 import os
+import requests
+from io import BytesIO
 from split_teams import parse_players, parse_availability, crosscheck_availability, split_teams
 
 # --- PATH CONFIGURATION ---
-# ROOT points to the folder containing your .py file
 ROOT = Path(__file__).parent.resolve()
 GENERATED = ROOT / 'generated'
 GENERATED.mkdir(exist_ok=True) 
 
-# This is the exact path based on your GitHub repo structure
-LOGO_PATH = ROOT / 'static' / 'images' / 'surprise_cricket_club.png'
+# Direct link to your GitHub image to bypass path issues
+LOGO_URL = "https://raw.githubusercontent.com/varunapj/CricketApp/main/static/images/surprise_cricket_club.png"
 
 def main():
     st.set_page_config(page_title='SCC Team Splitter', layout='wide')
 
-    # --- 1. LOGO LOADING ---
-    # We check if the file exists at the expected path
-    if LOGO_PATH.exists():
-        try:
-            img = Image.open(LOGO_PATH)
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                st.image(img, width=120) 
-            with col2:
-                st.title("Surprise Cricket Club — Team Splitter")
-        except Exception:
+    # --- 1. LOGO LOADING (Cloud-Optimized) ---
+    try:
+        # Fetching the logo via URL is the most reliable method for Streamlit Cloud
+        response = requests.get(LOGO_URL)
+        img = Image.open(BytesIO(response.content))
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            st.image(img, width=120) 
+        with col2:
             st.title("Surprise Cricket Club — Team Splitter")
-    else:
-        # Fallback if image isn't found
+    except Exception:
+        # Fallback if URL fails
         st.title("🏏 Surprise Cricket Club — Team Splitter")
 
     # --- 2. SIDEBAR ---
@@ -56,7 +55,6 @@ def main():
         submitted = st.form_submit_button('Split Teams')
 
     if submitted:
-        # Handle Master File Loading
         if use_repo and repo_files:
             master_path = str(ROOT / repo_choice)
         elif uploaded_master:
@@ -70,7 +68,6 @@ def main():
         try:
             players = parse_players(master_path)
             
-            # Filter availability if checked
             if use_avail and uploaded_avail:
                 avail_path = str(GENERATED / f"temp_avail{Path(uploaded_avail.name).suffix}")
                 with open(avail_path, 'wb') as f:
@@ -82,18 +79,15 @@ def main():
                 players_to_split = players
 
             # --- 3. PRIORITY SORTING (Impact > League > Role) ---
-            # Ensures draft starts with top priorities
             players_to_split.sort(key=lambda p: (
-                p.get('Impact Player', 'No') == 'Yes', 
-                p.get('League Player', 'No') == 'Yes', 
-                p.get('Role', 'Allrounder')            
+                str(p.get('Impact Player', 'No')).strip().lower() == 'yes', 
+                str(p.get('League Player', 'No')).strip().lower() == 'yes', 
+                str(p.get('Role', 'Allrounder')).strip()
             ), reverse=True)
 
-            # Perform the split
             teamA, teamB, totals = split_teams(players_to_split, ensure_role_parity=role_parity)
 
             # --- 4. STRICT DISPLAY (NAMES ONLY) ---
-            # Convert to DataFrame and select only 'name' to hide Role column
             df_a = pd.DataFrame(teamA)[['name']].rename(columns={'name': 'Player Name'})
             df_b = pd.DataFrame(teamB)[['name']].rename(columns={'name': 'Player Name'})
             df_a.index += 1
