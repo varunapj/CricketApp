@@ -13,6 +13,10 @@ def write_tsv_lines(lines):
 
 def main():
     st.set_page_config(page_title='Team Splitter', layout='wide')
+    # show logo if available
+    logo_path = ROOT / 'static' / 'images' / 'Surprise_Cricket_club.png'
+    if logo_path.exists():
+        st.image(str(logo_path), width=140)
     st.title('Surprise Cricket Club — Team Splitter (Streamlit)')
 
     with st.sidebar.form('options'):
@@ -26,9 +30,7 @@ def main():
         use_avail = st.checkbox('Use availability file', value=False)
         uploaded_avail = st.file_uploader('Upload availability (one-per-line or Excel/CSV)', type=['tsv', 'csv', 'xlsx', 'xls'])
 
-        st.markdown('**Scoring & options**')
-        impact_w = st.number_input('Impact weight', value=100, min_value=0)
-        league_w = st.number_input('League weight', value=10, min_value=0)
+        st.markdown('**Options**')
         role_parity = st.checkbox('Enforce role parity', value=False)
 
         submitted = st.form_submit_button('Split Teams')
@@ -72,7 +74,8 @@ def main():
             matched, unmatched, ambiguous = crosscheck_availability(players, avail_names)
             players_to_split = matched
 
-        teamA, teamB, totals = split_teams(players_to_split, impact_w=impact_w, league_w=league_w, ensure_role_parity=role_parity)
+        # Use default weights (Impact, League) from splitter; UI no longer exposes them
+        teamA, teamB, totals = split_teams(players_to_split, ensure_role_parity=role_parity)
 
         col1, col2 = st.columns(2)
         with col1:
