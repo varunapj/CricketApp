@@ -3,6 +3,7 @@ import csv
 import argparse
 from collections import defaultdict
 import re
+from pathlib import Path
 
 
 def normalize_role(raw):
@@ -26,7 +27,6 @@ def parse_players(path):
     Accepts paths to files with extensions: .tsv, .csv, .xlsx, .xls
     Returns list of player dicts with keys: name, dob, role, league, impact
     """
-    from pathlib import Path
     players = []
     p = Path(path)
     suffix = p.suffix.lower()

@@ -18,9 +18,11 @@ def save_upload(file_storage, prefix='upload'):
     # preserve extension so downstream parsers can detect format
     suffix = Path(file_storage.filename).suffix if file_storage.filename else ''
     tmp = tempfile.NamedTemporaryFile(prefix=prefix, suffix=suffix, dir=str(GENERATED_DIR), delete=False)
-    tmp.write(file_storage.read())
-    tmp.flush()
-    tmp.close()
+    try:
+        tmp.write(file_storage.read())
+    finally:
+        tmp.flush()
+        tmp.close()
     return tmp.name
 
 
