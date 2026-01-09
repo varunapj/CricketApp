@@ -3,8 +3,7 @@ from pathlib import Path
 from PIL import Image
 import pandas as pd
 import os
-import requests
-from io import BytesIO
+# Ensure split_teams.py does not have internal circular imports!
 from split_teams import parse_players, parse_availability, crosscheck_availability, split_teams
 
 # --- PATH CONFIGURATION ---
@@ -12,29 +11,41 @@ ROOT = Path(__file__).parent.resolve()
 GENERATED = ROOT / 'generated'
 GENERATED.mkdir(exist_ok=True) 
 
-# Direct link to your GitHub image to bypass path issues
-LOGO_URL = "https://raw.githubusercontent.com/varunapj/CricketApp/main/static/images/surprise_cricket_club.png"
+def get_logo():
+    """Checks for both possible filenames to handle case-sensitivity issues."""
+    # List of possible names found in your screenshots
+    names = ['surprise_cricket_club.png', 'Surprise_Cricket_Club.png']
+    for name in names:
+        # Check in the 'static/images' folder specifically
+        path = ROOT / 'static' / 'images' / name
+        if path.exists():
+            return path
+    return None
 
 def main():
     st.set_page_config(page_title='SCC Team Splitter', layout='wide')
 
-    # --- 1. LOGO LOADING (Cloud-Optimized) ---
-    try:
-        # Fetching the logo via URL is the most reliable method for Streamlit Cloud
-        response = requests.get(LOGO_URL)
-        img = Image.open(BytesIO(response.content))
-        col1, col2 = st.columns([1, 5])
-        with col1:
-            st.image(img, width=120) 
-        with col2:
+    # --- 1. LOGO LOADING ---
+    logo_path = get_logo()
+    
+    if logo_path:
+        try:
+            img = Image.open(logo_path)
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                st.image(img, width=150) 
+            with col2:
+                st.title("Surprise Cricket Club — Team Splitter")
+        except Exception:
             st.title("Surprise Cricket Club — Team Splitter")
-    except Exception:
-        # Fallback if URL fails
+    else:
+        # Fallback to emoji if file is still not found
         st.title("🏏 Surprise Cricket Club — Team Splitter")
 
     # --- 2. SIDEBAR ---
     with st.sidebar.form('options'):
         st.header("Configuration")
+        # Filters for master files in root
         repo_files = [p.name for p in ROOT.iterdir() if p.is_file() and p.suffix.lower() in ('.tsv', '.csv', '.xlsx', '.xls')]
         
         default_idx = 0
@@ -50,7 +61,7 @@ def main():
         uploaded_avail = st.file_uploader('Upload Availability', type=['tsv', 'csv', 'xlsx', 'xls'])
         
         st.markdown("---")
-        st.write("**Balance Settings**")
+        st.write("**Priority & Balance Settings**")
         role_parity = st.checkbox('Enforce Role Parity', value=True)
         submitted = st.form_submit_button('Split Teams')
 
