@@ -13,9 +13,16 @@ def write_tsv_lines(lines):
 
 def main():
     st.set_page_config(page_title='Team Splitter', layout='wide')
-    # show logo if available
-    logo_path = ROOT / 'static' / 'images' / 'Surprise_Cricket_club.png'
-    if logo_path.exists():
+    # show logo if available (case-insensitive lookup)
+    logo_path = None
+    logo_dir = ROOT / 'static' / 'images'
+    if logo_dir.exists():
+        for p in logo_dir.iterdir():
+            if p.is_file() and p.suffix.lower() in ('.png', '.jpg', '.jpeg'):
+                if p.name.lower() == 'surprise_cricket_club.png' or 'surprise_cricket' in p.name.lower():
+                    logo_path = p
+                    break
+    if logo_path:
         st.image(str(logo_path), width=140)
     st.title('Surprise Cricket Club — Team Splitter (Streamlit)')
 
