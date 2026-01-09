@@ -4,3 +4,8 @@ __pycache__/
 # generated team files
 players_teams_*.tsv
 avail_teams_*.tsv
+generated/
+samples/
+generated/*
+samples/*
+.venv/
