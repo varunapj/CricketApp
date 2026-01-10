@@ -2,121 +2,176 @@ import streamlit as st
 from pathlib import Path
 from PIL import Image
 import pandas as pd
-import os
-# Ensure split_teams.py does not have internal circular imports!
-from split_teams import parse_players, parse_availability, crosscheck_availability, split_teams
+import urllib.parse
 
-# --- PATH CONFIGURATION ---
+from split_teams import (
+    parse_players,
+    parse_availability,
+    crosscheck_availability,
+    split_teams
+)
+
+# -------------------- PATHS --------------------
 ROOT = Path(__file__).parent.resolve()
-GENERATED = ROOT / 'generated'
-GENERATED.mkdir(exist_ok=True) 
+GENERATED = ROOT / "generated"
+GENERATED.mkdir(exist_ok=True)
 
+# -------------------- LOGO --------------------
 def get_logo():
-    """Checks for both possible filenames to handle case-sensitivity issues."""
-    # List of possible names found in your screenshots
-    names = ['surprise_cricket_club.png', 'Surprise_Cricket_Club.png']
-    for name in names:
-        # Check in the 'static/images' folder specifically
-        path = ROOT / 'static' / 'images' / name
-        if path.exists():
-            return path
+    for name in ["surprise_cricket_club.png", "Surprise_Cricket_Club.png"]:
+        p = ROOT / "static" / "images" / name
+        if p.exists():
+            return p
     return None
 
+# -------------------- LOAD INVENTORY --------------------
+def load_inventory():
+    edited = GENERATED / "Players_Inventory_edited.tsv"
+    base = ROOT / "Players_Inventory.tsv"
+    path = edited if edited.exists() else base
+
+    if not path.exists():
+        return pd.DataFrame()
+
+    df = pd.read_csv(path, sep="\t")
+
+    # Normalize Yes/No → Y/N
+    for col in df.columns:
+        if df[col].dtype == object:
+            df[col] = df[col].replace(
+                {"Yes": "Y", "No": "N", "yes": "Y", "no": "N"}
+            )
+
+    # Ensure No column exists
+    if "No" not in df.columns:
+        df.insert(0, "No", range(1, len(df) + 1))
+
+    return df
+
+# -------------------- MAIN APP --------------------
 def main():
-    st.set_page_config(page_title='SCC Team Splitter', layout='wide')
+    st.set_page_config(
+        page_title="Surprise Cricket Club — Team Splitter",
+        layout="wide"
+    )
 
-    # --- 1. LOGO LOADING ---
-    logo_path = get_logo()
-    
-    if logo_path:
+    # ---------- HEADER ----------
+    c1, c2 = st.columns([1, 4])
+    with c1:
+        logo = get_logo()
+        if logo:
+            st.image(Image.open(logo), width=140)
+    with c2:
+        st.title("Surprise Cricket Club — Team Splitter")
+
+    st.markdown("---")
+
+    # ---------- INVENTORY ----------
+    df_inventory = load_inventory()
+    if df_inventory.empty:
+        st.error("Players_Inventory.tsv not found.")
+        return
+
+    with st.expander("📋 Players Inventory (Add / Edit / Delete)", expanded=True):
+
+        df_editor = st.data_editor(
+            df_inventory,
+            num_rows="dynamic",
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "No": st.column_config.NumberColumn(
+                    "No", disabled=True, width="small"
+                ),
+                "Role": st.column_config.SelectboxColumn(
+                    "Role",
+                    options=["Allrounder", "Batsman", "Bowler"]
+                ),
+            },
+            key="players_editor"
+        )
+
+        if st.button("💾 Save Players Inventory"):
+            df_save = df_editor.copy()
+            df_save["No"] = range(1, len(df_save) + 1)  # auto-reindex
+            df_save.to_csv(
+                GENERATED / "Players_Inventory_edited.tsv",
+                sep="\t",
+                index=False
+            )
+            st.success("Inventory saved successfully!")
+
+    # ---------- SIDEBAR ----------
+    with st.sidebar:
+        st.header("⚙️ Controls")
+        use_avail = st.checkbox("Apply Availability File", value=True)
+        uploaded_avail = st.file_uploader(
+            "Upload Availability",
+            type=["tsv", "csv", "xlsx", "xls"]
+        )
+        role_parity = st.checkbox("Balance Roles", value=True)
+        split_btn = st.button("⚡ SPLIT TEAMS", use_container_width=True)
+
+    # ---------- TEAM SPLIT ----------
+    if split_btn:
         try:
-            img = Image.open(logo_path)
-            col1, col2 = st.columns([1, 5])
-            with col1:
-                st.image(img, width=150) 
-            with col2:
-                st.title("Surprise Cricket Club — Team Splitter")
-        except Exception:
-            st.title("Surprise Cricket Club — Team Splitter")
-    else:
-        # Fallback to emoji if file is still not found
-        st.title("🏏 Surprise Cricket Club — Team Splitter")
+            df_active = df_editor.copy()
+            df_active["No"] = range(1, len(df_active) + 1)
 
-    # --- 2. SIDEBAR ---
-    with st.sidebar.form('options'):
-        st.header("Configuration")
-        # Filters for master files in root
-        repo_files = [p.name for p in ROOT.iterdir() if p.is_file() and p.suffix.lower() in ('.tsv', '.csv', '.xlsx', '.xls')]
-        
-        default_idx = 0
-        if 'Players_Inventory.tsv' in repo_files:
-            default_idx = repo_files.index('Players_Inventory.tsv')
-            
-        repo_choice = st.selectbox('Master File', repo_files if repo_files else ["No files found"], index=default_idx)
-        use_repo = st.checkbox('Use repository master', value=True)
-        uploaded_master = st.file_uploader('Upload Master', type=['tsv', 'csv', 'xlsx', 'xls'])
-        
-        st.markdown("---")
-        use_avail = st.checkbox('Use availability', value=False)
-        uploaded_avail = st.file_uploader('Upload Availability', type=['tsv', 'csv', 'xlsx', 'xls'])
-        
-        st.markdown("---")
-        st.write("**Priority & Balance Settings**")
-        role_parity = st.checkbox('Enforce Role Parity', value=True)
-        submitted = st.form_submit_button('Split Teams')
+            temp_path = GENERATED / "active_inventory.tsv"
+            df_active.to_csv(temp_path, sep="\t", index=False)
 
-    if submitted:
-        if use_repo and repo_files:
-            master_path = str(ROOT / repo_choice)
-        elif uploaded_master:
-            master_path = str(GENERATED / f"temp_master{Path(uploaded_master.name).suffix}")
-            with open(master_path, 'wb') as f:
-                f.write(uploaded_master.getbuffer())
-        else:
-            st.error("Please provide a file.")
-            return
+            players = parse_players(str(temp_path))
 
-        try:
-            players = parse_players(master_path)
-            
             if use_avail and uploaded_avail:
-                avail_path = str(GENERATED / f"temp_avail{Path(uploaded_avail.name).suffix}")
-                with open(avail_path, 'wb') as f:
+                avail_path = GENERATED / uploaded_avail.name
+                with open(avail_path, "wb") as f:
                     f.write(uploaded_avail.getbuffer())
-                avail_names = parse_availability(avail_path)
-                matched, _, _ = crosscheck_availability(players, avail_names)
-                players_to_split = matched
-            else:
-                players_to_split = players
 
-            # --- 3. PRIORITY SORTING (Impact > League > Role) ---
-            players_to_split.sort(key=lambda p: (
-                str(p.get('Impact Player', 'No')).strip().lower() == 'yes', 
-                str(p.get('League Player', 'No')).strip().lower() == 'yes', 
-                str(p.get('Role', 'Allrounder')).strip()
-            ), reverse=True)
+                avail_names = parse_availability(str(avail_path))
+                players, _, _ = crosscheck_availability(players, avail_names)
 
-            teamA, teamB, totals = split_teams(players_to_split, ensure_role_parity=role_parity)
+            teamA, teamB, totals = split_teams(
+                players,
+                ensure_role_parity=role_parity
+            )
 
-            # --- 4. STRICT DISPLAY (NAMES ONLY) ---
-            df_a = pd.DataFrame(teamA)[['name']].rename(columns={'name': 'Player Name'})
-            df_b = pd.DataFrame(teamB)[['name']].rename(columns={'name': 'Player Name'})
-            df_a.index += 1
-            df_b.index += 1
+            cA, cB = st.columns(2)
 
-            st.success("Teams Split by Priority (Impact > League > Role)")
-            col_left, col_right = st.columns(2)
+            with cA:
+                st.subheader(f"🏆 Team A — Score {totals.get('A', 0)}")
+                dfA = pd.DataFrame(teamA)[["name"]]
+                dfA.index = range(1, len(dfA) + 1)
+                st.table(dfA)
 
-            with col_left:
-                st.subheader(f"Team A (Total Score: {totals.get('A', 0)})")
-                st.table(df_a) 
-                
-            with col_right:
-                st.subheader(f"Team B (Total Score: {totals.get('B', 0)})")
-                st.table(df_b)
+            with cB:
+                st.subheader(f"🏆 Team B — Score {totals.get('B', 0)}")
+                dfB = pd.DataFrame(teamB)[["name"]]
+                dfB.index = range(1, len(dfB) + 1)
+                st.table(dfB)
+
+            # ---------- WHATSAPP SHARE ----------
+            msg = (
+                "🏏 *SURPRISE CRICKET CLUB*\n\n"
+                "*TEAM A*\n" +
+                "\n".join(f"{i}. {p['name']}" for i, p in enumerate(teamA, 1)) +
+                "\n\n*TEAM B*\n" +
+                "\n".join(f"{i}. {p['name']}" for i, p in enumerate(teamB, 1))
+            )
+
+            wa_url = f"https://wa.me/?text={urllib.parse.quote(msg)}"
+            st.markdown(
+                f'<a href="{wa_url}" target="_blank" '
+                f'style="background:#25D366;color:white;'
+                f'padding:12px 20px;border-radius:8px;'
+                f'text-decoration:none;font-weight:bold;display:inline-block;">'
+                f'📤 Share to WhatsApp</a>',
+                unsafe_allow_html=True
+            )
 
         except Exception as e:
             st.error(f"Error: {e}")
 
-if __name__ == '__main__':
+# -------------------- RUN --------------------
+if __name__ == "__main__":
     main()
